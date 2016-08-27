@@ -1,8 +1,11 @@
-
-const RQueue = require('lib/rq');
-
+import RQueue from './lib/rq';
 
 
-module.exports (function(options){
+console.log('aa');
+/**
+ * options
+ *
+ */
+export default function (options) {
     return new RQueue(options);
-})(options);
+}

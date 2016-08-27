@@ -1,11 +1,11 @@
 import RQueue from './lib/rq';
 
-
-console.log('aa');
 /**
  * options
  *
  */
+import temp from './lib/eBus/tests/test1';
+
 export default function (options) {
     return new RQueue(options);
 }

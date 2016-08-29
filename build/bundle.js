@@ -133,7 +133,7 @@
 	
 	var _listener2 = _interopRequireDefault(_listener);
 	
-	var _logger = __webpack_require__(7);
+	var _logger = __webpack_require__(5);
 	
 	var _logger2 = _interopRequireDefault(_logger);
 	
@@ -147,6 +147,20 @@
 	
 	        this._eventListenerMap = new Map();
 	    }
+	
+	    /**
+	     * Attaches a listener to the eBus
+	     *
+	     * @param listenerPayload {object} Payload which will be needed to attach a listener to the eBus
+	     * listenerPayload : {
+	     *      name : <string>[Required],
+	     *      event : <string>[Required],
+	     *      routine : <function> [Required],
+	     *      context : <object> [Optional],
+	     *      options : <object> [Optional]
+	     * }
+	     */
+	
 	
 	    _createClass(eBus, [{
 	        key: 'addListener',
@@ -184,6 +198,14 @@
 	                }
 	            }
 	        }
+	
+	        /**
+	         * Removes a listeners from the eBus
+	         *
+	         * @param listenerName {string}[Required] Uuid of the listner attaching context who want's to remove this listener.
+	         * @param eventName {string}[Required] Name of the event that need not to be listened any more.
+	         */
+	
 	    }, {
 	        key: 'removeListener',
 	        value: function removeListener(listenerName, eventName) {
@@ -219,6 +241,15 @@
 	
 	            this._eventListenerMap.set(eventName, updatedListnersList);
 	        }
+	
+	        /**
+	         * Triggers an event on the eBus making all the sideEffects to be executed for such event
+	         *
+	         * @param event {string} [Required] Name of the event that is published
+	         * @param target {string} [Optional] The Uuid of the publisher who is publishing the event.
+	         * @param payload {Array} [Optional] The payload that the event publisher would want to be passed to all the side effects.
+	         */
+	
 	    }, {
 	        key: 'trigger',
 	        value: function trigger(event, target) {
@@ -290,7 +321,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _logger = __webpack_require__(7);
+	var _logger = __webpack_require__(5);
 	
 	var _logger2 = _interopRequireDefault(_logger);
 	
@@ -330,22 +361,40 @@
 	        this._context = context;
 	    }
 	
+	    /**
+	     * Executes the listener side effect routine.
+	     *
+	     * @param target {string} represents the uuid of the entity publishing this event
+	     * @param payload {object} The payload passed by the target which will be forwared to side effect routine
+	     * as param
+	     */
+	
+	
 	    _createClass(Listener, [{
 	        key: 'execute',
-	        value: function execute(target) {
+	        value: function execute(target, payload) {
 	            _logger2.default.log(this._listenerUid + ' listener execution begins');
-	
-	            for (var _len = arguments.length, payload = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	                payload[_key - 1] = arguments[_key];
-	            }
-	
 	            this._listenerSideEffectRoutine.apply(this._context, payload);
 	        }
+	
+	        /**
+	         * Getter Function to retrieve UUid of the context which added the listener
+	         *
+	         * @returns {string} The UUid of the listener adding context
+	         */
+	
 	    }, {
 	        key: 'listenerUid',
 	        get: function get() {
 	            return this._listenerUid;
 	        }
+	
+	        /**
+	         * Getter Function to retrieve the sideEffect routine attached by the context during listener creation.
+	         *
+	         * @returns {Function} Retruns the sideEffect routine attached by the context
+	         */
+	
 	    }, {
 	        key: 'listenerSideEffectRoutine',
 	        get: function get() {
@@ -359,52 +408,7 @@
 	exports.default = Listener;
 
 /***/ },
-/* 5 */,
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var _eBus = __webpack_require__(2);
-	
-	var _eBus2 = _interopRequireDefault(_eBus);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var EBusInstance = new _eBus2.default(); /**
-	                                          * Created by ankit.agrawal on 27/08/16.
-	                                          */
-	
-	EBusInstance.addListener({
-	    name: 'First Listener',
-	    event: 'First_Event',
-	    routine: function routine() {
-	        console.log('First Text Executed from First Listener for First Event');
-	    }
-	});
-	
-	EBusInstance.addListener([{
-	    name: 'Second Listener',
-	    event: 'First_Event',
-	    routine: function routine() {
-	        console.log('First Text Executed from Second Listener for First Event');
-	    }
-	}, {
-	    name: 'Third Listener',
-	    event: 'First_Event',
-	    routine: function routine() {
-	        console.log('First Text Executed from Third Listener for First Event');
-	    }
-	}]);
-	
-	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
-	
-	EBusInstance.removeListener('First Listener', 'First_Event');
-	
-	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
-
-/***/ },
-/* 7 */
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -445,6 +449,51 @@
 	exports.default = function () {
 	    return new ErrorDisplay();
 	}();
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _eBus = __webpack_require__(2);
+	
+	var _eBus2 = _interopRequireDefault(_eBus);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var EBusInstance = new _eBus2.default(); /**
+	                                          * Created by ankit.agrawal on 27/08/16.
+	                                          */
+	
+	EBusInstance.addListener({
+	    name: 'First Listener',
+	    event: 'First_Event',
+	    routine: function routine() {
+	        console.log('First Text Executed from First Listener for First Event');
+	    }
+	});
+	
+	EBusInstance.addListener([{
+	    name: 'Second Listener',
+	    event: 'First_Event',
+	    routine: function routine(payload) {
+	        console.log(payload);
+	        console.log('First Text Executed from Second Listener for First Event');
+	    }
+	}, {
+	    name: 'Third Listener',
+	    event: 'First_Event',
+	    routine: function routine() {
+	        console.log('First Text Executed from Third Listener for First Event');
+	    }
+	}]);
+	
+	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
+	
+	EBusInstance.removeListener('First Listener', 'First_Event');
+	
+	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
 
 /***/ }
 /******/ ]);

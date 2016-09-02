@@ -146,6 +146,7 @@
 	        _classCallCheck(this, eBus);
 	
 	        this._eventListenerMap = new Map();
+	        this._eventTriggeredFlag = new Map();
 	    }
 	
 	    /**
@@ -158,6 +159,12 @@
 	     *      routine : <function> [Required],
 	     *      context : <object> [Optional],
 	     *      options : <object> [Optional]
+	     * }
+	     * options : {
+	     *      once : <boolean>,
+	     *      rememberPast: <boolean>,
+	     *      throttle : <timestamp>,
+	     *      target : <string>
 	     * }
 	     */
 	
@@ -178,7 +185,7 @@
 	                    var payloadObj = _step.value;
 	
 	                    var event = payloadObj.event;
-	                    var listenerObj = new _listener2.default(payloadObj.name, payloadObj.routine, payloadObj.context, listenerPayload.options);
+	                    var listenerObj = new _listener2.default(payloadObj.name, payloadObj.routine, payloadObj.context, payloadObj.options);
 	
 	                    this._eventListenerMap.has(event) ? this._eventListenerMap.get(event).push(listenerObj) : this._eventListenerMap.set(event, [listenerObj]);
 	                    _logger2.default.log(payloadObj.name, ' listener is attached with ', event);
@@ -253,12 +260,12 @@
 	    }, {
 	        key: 'trigger',
 	        value: function trigger(event, target) {
-	            var listenersList = this._eventListenerMap.get(event);
-	
 	            for (var _len = arguments.length, payload = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
 	                payload[_key - 2] = arguments[_key];
 	            }
 	
+	            var listenersList = this._eventListenerMap.get(event);
+	            this._eventTriggeredFlag.set(event, { executed: true, payload: payload });
 	            var _iteratorNormalCompletion3 = true;
 	            var _didIteratorError3 = false;
 	            var _iteratorError3 = undefined;
@@ -325,6 +332,10 @@
 	
 	var _logger2 = _interopRequireDefault(_logger);
 	
+	var _utils = __webpack_require__(7);
+	
+	var _utils2 = _interopRequireDefault(_utils);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -349,7 +360,9 @@
 	     * @param listenerUid
 	     * @param listenerSideEffectRoutine
 	     */
-	    function Listener(listenerUid, listenerSideEffectRoutine, context, options) {
+	    function Listener(listenerUid, listenerSideEffectRoutine, context) {
+	        var options = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
+	
 	        _classCallCheck(this, Listener);
 	
 	        if (!validateConstructorParams(arguments)) {
@@ -359,6 +372,11 @@
 	        this._listenerUid = listenerUid;
 	        this._listenerSideEffectRoutine = listenerSideEffectRoutine;
 	        this._context = context;
+	        this._executionCount = 0;
+	        this._executeOnce = options.once ? true : false;
+	        this._creationTimestamp = _utils2.default.getCurrentTime();
+	        this._target = options.target || void 0;
+	        this._lastExecutionTimestamp = void 0;
 	    }
 	
 	    /**
@@ -374,7 +392,19 @@
 	        key: 'execute',
 	        value: function execute(target, payload) {
 	            _logger2.default.log(this._listenerUid + ' listener execution begins');
+	            if (this._executeOnce && this._executionCount > 0) {
+	                _logger2.default.log(this._listenerUid, ' listener execution skipped..');
+	                return void 0;
+	            }
+	
+	            if (this._target != void 0 && target != this._target) {
+	                _logger2.default.log(this._listenerUid, ' listener execution skipped due to unmatching target');
+	                return void 0;
+	            }
+	
+	            this._lastExecutionTimestamp = _utils2.default.getCurrentTime();
 	            this._listenerSideEffectRoutine.apply(this._context, payload);
+	            this._executionCount += 1;
 	        }
 	
 	        /**
@@ -467,33 +497,54 @@
 	                                          */
 	
 	EBusInstance.addListener({
-	    name: 'First Listener',
+	    name: '1',
 	    event: 'First_Event',
 	    routine: function routine() {
 	        console.log('First Text Executed from First Listener for First Event');
+	    },
+	    options: {
+	        target: 'First_Publisher',
+	        once: true
 	    }
 	});
 	
-	EBusInstance.addListener([{
-	    name: 'Second Listener',
-	    event: 'First_Event',
-	    routine: function routine(payload) {
-	        console.log(payload);
-	        console.log('First Text Executed from Second Listener for First Event');
-	    }
-	}, {
-	    name: 'Third Listener',
-	    event: 'First_Event',
-	    routine: function routine() {
-	        console.log('First Text Executed from Third Listener for First Event');
-	    }
-	}]);
+	// EBusInstance.addListener([{
+	//     name: 'Second Listener',
+	//     event: 'First_Event',
+	//     routine: function (payload) {
+	//         console.log(payload);
+	//         console.log('First Text Executed from Second Listener for First Event');
+	//     }
+	// }, {
+	//     name: 'Third Listener',
+	//     event: 'First_Event',
+	//     routine: function () {
+	//         console.log('First Text Executed from Third Listener for First Event');
+	//     }
+	// }]);
+	
 	
 	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
-	
-	EBusInstance.removeListener('First Listener', 'First_Event');
-	
 	EBusInstance.trigger('First_Event', 'First_Publisher', { temp: 'temp' });
+	
+	// EBusInstance.removeListener('First Listener', 'First_Event');
+	//
+	// EBusInstance.trigger('First_Event', 'First_Publisher', {temp: 'temp'});
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = {
+	    getCurrentTime: function getCurrentTime() {
+	        return new Date().getTime();
+	    }
+	};
 
 /***/ }
 /******/ ]);
